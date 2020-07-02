@@ -20,4 +20,4 @@ def test_form(request):
 
     else:
         formset = RulseFormSet(prefix='rule-form')
-    return render(request, "djangorrules/create-rule.html", {'formset': formset})
+    return render(request, "djangorrules/templates/djangorrules/create-rule.html", {'formset': formset})

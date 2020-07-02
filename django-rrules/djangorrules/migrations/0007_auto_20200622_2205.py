@@ -25,6 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='rule',
             name='count',
-            field=models.PositiveIntegerField(blank=True, default=None, null=True, validators=[djangorrules.validators.validate_nonzero]),
+            field=models.PositiveIntegerField(blank=True, default=None, null=True, validators=[
+                djangorrules.validators.validate_nonzero]),
         ),
     ]

@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='rule',
             name='interval',
-            field=models.PositiveIntegerField(blank=True, default=None, validators=[djangorrules.validators.validate_nonzero]),
+            field=models.PositiveIntegerField(blank=True, default=None, validators=[
+                djangorrules.validators.validate_nonzero]),
         ),
     ]

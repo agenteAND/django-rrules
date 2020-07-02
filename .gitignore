@@ -3,3 +3,4 @@
 /locale/
 /db.sqlite3
 /manage.py
+/django-rrules/dist/

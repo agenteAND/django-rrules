@@ -30,7 +30,7 @@ In [1] from djangorrules.models import Rule, Recurrence, RDate
 In [2] from datetime import datetime
 In [3] dt = datetime(1993, 7, 25)
 In [4]: daily = Rule(recurrence=re, dtstart=dt, freq=Rule.DAILY, freq_type=Rule.COUNT, interval=1,  count=20)                                                                                           
-
+ 
 In [5]: daily                                                                                                                                                                          
 Out[5]: <Rule: daily, for 20 occurrences>
 
