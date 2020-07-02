@@ -1,6 +1,6 @@
 # django-rrules version alpha
 
-#### This a App to work based in [dateutil.rrule](https://github.com/dateutil/dateutil/) module to work with recurrence dates
+#### This a App based in [dateutil.rrule](https://github.com/dateutil/dateutil/) module to work with recurrence dates
 This App aims to be more flexible than[ django-reccurence](https://github.com/django-recurrence/django-recurrence)
 
 # install 
