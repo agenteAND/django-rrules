@@ -6,6 +6,12 @@ This App aims to be more flexible than[ django-reccurence](https://github.com/dj
 # install 
 git clone https://github.com/agenteAND/django-rrules.git
 
+#### requirements
+- Python 3.6+
+- django 2.2+
+- django-multiselectfield / pip install django-multiselectfield
+- python-dateutil / pip install python-dateutil
+- django-select2 (optional if you want to use form)  / pip install django-select2
 ## Usage
 ```python
 # models.py
