@@ -57,6 +57,7 @@ In [17]: for date in daily.to_dateutil_rule:
 1993-08-12 05:03:07-04:00
 1993-08-13 05:03:07-04:00
 
+my_birthday = Rule(recurrence=re, dtstart=dt, freq=Rule.YEARLY, bymonth=['7'], bymonthday=['25'], freq_type=Rule.COUNT, interval=1,  count=27) 
 In [25]: str(my_birthday)                                                                                                                                                              
 Out[25]: 'annually, in Jul, on the 25th, for 27 occurrences'
 
