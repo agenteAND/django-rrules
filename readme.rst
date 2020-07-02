@@ -9,6 +9,7 @@ This a App based in [dateutil.rrule](https://github.com/dateutil/dateutil/) modu
 This App aims to be more flexible than[ django-reccurence](https://github.com/django-recurrence/django-recurrence)
 
 install
+=======
 pip install git+https://github.com/agenteAND/django-rrules.git#egg=djangorrules
 
 
