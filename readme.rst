@@ -22,7 +22,7 @@ Quick start
 
     INSTALLED_APPS = [
         # requirements
-        'django-multiselectfield',
+        'multiselectfield',
         # ------------------
         'djangorrules',
     ]
