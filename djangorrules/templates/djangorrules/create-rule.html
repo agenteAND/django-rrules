@@ -1,0 +1,113 @@
+{% load crispy_forms_filters %}
+{% load static %}
+{% load crispy_forms_tags  formset_tags %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+          integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    {{ formset.media.css }}
+</head>
+<body>
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+        <div id="rule-formset" data-formset-prefix="{{ formset.prefix }}">
+            {{ formset.management_form }}
+            <div data-formset-body>
+                <!-- New forms will be inserted in here -->
+                <div id="accordion">
+                    {% for form in formset %}
+                        <div data-formset-form data-form-number="{{ forloop.counter0 }}">
+                            <div class="card">
+                                <div class="card-header" id="heading{{ forloop.counter0 }}">
+                                    <h5 class="mb-0">
+                                        <a class="btn btn-link" href="#" data-toggle="collapse"
+                                           data-target="#collapse{{ forloop.counter0 }}"
+                                           aria-expanded="true" aria-controls="collapse{{ forloop.counter0 }}">
+                                            Collapsible Group Item #{{ forloop.counter0 }}
+                                        </a>
+                                    </h5>
+                                </div>
+
+                                <div id="collapse{{ forloop.counter0 }}" class="collapse aria-labelledby="heading{{ forloop.counter0 }}"
+                                     data-parent="#accordion">
+                                    <div class="card-body">
+                                        {{ form|crispy }}
+                                        <button type="button" data-formset-delete-button>Delete form</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- The empty form template. By wrapping this in a <script> tag, the
+            __prefix__ placeholder can easily be replaced in both attributes and
+            any scripts -->
+            <script type="form-template" data-formset-empty-form>
+                {% escapescript %}
+                    <div data-formset-form data-form-number="{{ forloop.counter0 }}">
+                        <div class="card">
+                            <div class="card-header" id="headingOne">
+                                <h5 class="mb-0">
+                                    <a class="btn btn-link" href="#" data-toggle="collapse" data-target="#collapseOne"
+                                            aria-expanded="true" aria-controls="collapseOne">
+                                        Collapsible Group Item
+                                    </a>
+                                </h5>
+                            </div>
+
+                            <div id="collapse{{ forloop.counter0 }}" class="collapse show" aria-labelledby="headingOne"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    {{ formset.empty_form | crispy }}
+                                    <button type="button" data-formset-delete-button>Delete form</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endescapescript %}
+            </script>
+
+            <!-- This button will add a new form when clicked -->
+            <input type="button" value="Add another" data-formset-add>
+        </div>
+        <input type="submit" value="submit">
+    </form>
+    <br><br>
+
+
+</div>
+{# container #}
+<script src="{% static 'js/jquery.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+        integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+        crossorigin="anonymous"></script>
+<script type="text/javascript" src="{% static 'js/jquery.formset.js' %}"></script>
+
+{{ formset.media.js }}
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+        jQuery(function ($) {
+            $("#rule-formset").formset({
+                animateForms: true
+            });
+        });
+    });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+/* hide optgroup disabled in select2 */
+.select2-container--default .select2-results__option[aria-disabled=true] , optgroup[disabled]{
+    display: none;
+}
+
+.optgroup-label-hidden optgroup{
+    color: transparent;
+}
+
+.optgroup-label-hidden optgroup option{
+    color: black;
+}
