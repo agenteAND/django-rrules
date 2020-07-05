@@ -93,9 +93,7 @@ class Recurrence(models.Model):
         rule_set = rruleset()
         rules = self.rules.all()
         r_dates = self.r_dates.all()
-        if not rules.exists() and not r_dates.exists():
-            return False
-
+        
         if rules.exists():
             for rule in rules:
                 dateutil_object = rule.to_dateutil_rule
