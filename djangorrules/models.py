@@ -91,8 +91,8 @@ class Recurrence(models.Model):
         """
         recurrence_tz = pytz.timezone(self.timezone)
         rule_set = rruleset(cache=cache)
-        rules = self.rules.prefetch_related('rules').all()
-        r_dates = self.r_dates.prefetch_related('r_dates').all()
+        rules = self.rules.all()
+        r_dates = self.r_dates.all()
         
         if rules.exists():
             for rule in rules:
