@@ -83,14 +83,14 @@ class Recurrence(models.Model):
             self.naive_dt_start_time = utc_dt_start.time()
         super().save(*args, **kwargs)
 
-    def to_dateutil_ruleset(self):
+    def to_dateutil_ruleset(self, cache=False):
         """
         get a dateutil rruleset object
         exdate method needs a datetime with same time part of dtstart
         because dtstart is the base for the recurrence
         """
         recurrence_tz = pytz.timezone(self.timezone)
-        rule_set = rruleset()
+        rule_set = rruleset(cache=cache)
         rules = self.rules.all()
         r_dates = self.r_dates.all()
         
