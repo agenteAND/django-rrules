@@ -1,10 +1,10 @@
 import re
 import pytz
-from datetime import datetime
+from datetime import datetime, time
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils import dateformat
-from django.utils.translation import gettext_lazy as _, ugettext as u_, pgettext as _p
+from django.utils import dateformat, timezone
+from django.utils.translation import gettext_lazy as _, pgettext as _p
 
 from django.core.exceptions import ValidationError
 from multiselectfield import MultiSelectField
@@ -62,26 +62,23 @@ class Recurrence(models.Model):
 
     Besides these methods, rruleset instances also support the __getitem__() and __contains__() special methods
     """
-    utc_dt_start = models.DateTimeField()
-    naive_dt_start_date = models.DateField(blank=True)
-    naive_dt_start_time = models.TimeField(blank=True)
-    timezone = models.CharField(max_length=30)
+
+    # set a fixed time because all instances must have the same
+    # hour time - otherwise the exclude rules not working correctly
+    TIME = time(hour=12, minute=0, second=0)
+    TIME_ZONE_LIST = [
+        (tz, tz) for tz in pytz.all_timezones
+    ]
+
+    timezone = models.CharField(max_length=30, choices=TIME_ZONE_LIST)
 
     def __str__(self):
-        return _("recurrence #%(pk)s start: %(dtstart)s  timezone: %(timezone)s rules: %(rules)d rdates: %(dates)s") % {
+        return _("recurrence #%(pk)s timezone: %(timezone)s rules: %(rules)d rdates: %(dates)s") % {
             'pk': self.pk,
-            'dtstart': datetime.combine(self.naive_dt_start_date, self.naive_dt_start_time),
             'timezone': self.timezone,
             'rules': self.rules.all().count(),
             'dates': self.r_dates.all().count()
         }
-
-    def save(self, *args, **kwargs):
-        utc_dt_start = self.utc_dt_start
-        if utc_dt_start:
-            self.naive_dt_start_date = utc_dt_start.date()
-            self.naive_dt_start_time = utc_dt_start.time()
-        super().save(*args, **kwargs)
 
     def to_dateutil_ruleset(self, cache=False):
         """
@@ -93,7 +90,7 @@ class Recurrence(models.Model):
         rule_set = rruleset(cache=cache)
         rules = self.rules.all()
         r_dates = self.r_dates.all()
-        
+
         if rules.exists():
             for rule in rules:
                 dateutil_object = rule.to_dateutil_rule
@@ -103,13 +100,11 @@ class Recurrence(models.Model):
                     rule_set.rrule(dateutil_object)
         if r_dates.exists():
             for day in r_dates:
+                dt = datetime.combine(day.naive_dt, self.TIME)
+                dt = recurrence_tz.localize(dt)
                 if day.exclude:
-                    dt = datetime.combine(day.naive_dt, self.naive_dt_start_time)
-                    dt = recurrence_tz.localize(dt)
                     rule_set.exdate(dt)
                 else:
-                    dt = datetime.combine(day.naive_dt, day.naive_dt_time)
-                    dt = recurrence_tz.localize(dt)
                     rule_set.rdate(dt)
         return rule_set
 
@@ -378,7 +373,8 @@ class Rule(models.Model):
                     MaxValueValidator(BY_DAY)
                     ]
     )
-    dtstart = models.DateField(blank=True)
+    dtstart = models.DateField(default=timezone.now)
+    utc_dtstart = models.DateTimeField(editable=False)
     interval = models.PositiveIntegerField(default=None, validators=[MinValueValidator(1)])
     wkst = models.PositiveSmallIntegerField(_("First Weekday"), choices=WEEKDAYS, default=MONDAY)
     bymonth = MultiSelectField(choices=MONTH_CHOICES, blank=True, null=True, default=None)
@@ -388,9 +384,9 @@ class Rule(models.Model):
                                 validators=[MinValueValidator(MIN_BYSETPOS), MaxValueValidator(MAX_BYSETPOS)])
     freq_type = models.CharField(choices=FREQ_TYPE, max_length=30, default=FOREVER)
     count = models.PositiveIntegerField(blank=True, null=True, default=None, validators=[MinValueValidator(1)])
-    utc_until = models.DateTimeField(blank=True, null=True, default=None)
-    naive_until_date = models.DateField(blank=True, null=True, default=None)
-    naive_until_time = models.TimeField(blank=True, null=True, default=None)
+    until_date = models.DateField(blank=True, null=True, default=None)
+    utc_until = models.DateTimeField(blank=True, null=True, default=None, editable=False)
+    # naive_until_time = models.TimeField(blank=True, null=True, default=None)
     exclude = models.BooleanField(default=False)
 
     def __str__(self):
@@ -467,19 +463,19 @@ class Rule(models.Model):
                             code="invalid_weekday"
                         )
 
-        if self.count and self.utc_until:
+        if self.count and self.until_date:
             raise ValidationError(
                 _('count and until fields are excluded from each other'),
                 code='count_or_utc_forbidden'
             )
 
-        if self.freq_type == self.FOREVER and (self.utc_until or self.count):
+        if self.freq_type == self.FOREVER and (self.until_date or self.count):
             raise ValidationError(
                 _('count or until values are unnecessary with forever freq type'),
                 code='unnecessary'
             )
-        elif self.freq_type == self.UNTIL and not self.utc_until:
-            raise ValidationError({'utc_until': _('this field is required')}, code='until_required')
+        elif self.freq_type == self.UNTIL and not self.until_date:
+            raise ValidationError({'until_date': _('this field is required')}, code='until_required')
         elif self.freq_type == self.COUNT and not self.count:
             raise ValidationError({'count': _('this field is required')}, code='count_required')
 
@@ -492,15 +488,14 @@ class Rule(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        if self.utc_until:
-            self.naive_until_date = self.utc_until.date()
-            self.naive_until_time = self.utc_until.time()
+        tzname = pytz.timezone(self.recurrence.timezone)
+        self.utc_dtstart = tzname.localize(datetime.combine(self.dtstart, Recurrence.TIME))
+        if self.until_date:
+            dt = datetime.combine(self.until_date, Recurrence.TIME)
+            dt = tzname.localize(dt)
+            self.utc_until = dt
         else:
-            self.naive_until_date = None
-            self.naive_until_time = None
-
-        if not self.dtstart:
-            self.dtstart = self.recurrence.utc_dt_start.date()
+            self.utc_until = None
         super().save(*args, **kwargs)
 
     @staticmethod
@@ -548,12 +543,12 @@ class Rule(models.Model):
     def to_dateutil_rule(self):
         freq = self.freq
         dt_tz = pytz.timezone(self.recurrence.timezone)
-        dtstart = datetime.combine(self.dtstart, self.recurrence.naive_dt_start_time)
+        dtstart = datetime.combine(self.dtstart, Recurrence.TIME)
         dtstart = dt_tz.localize(dtstart)
         count = self.count or None
 
         if self.freq_type == self.UNTIL:
-            until = datetime.combine(self.naive_until_date, self.naive_until_time)
+            until = datetime.combine(self.until_date, Recurrence.TIME)
             until = dt_tz.localize(until)
         else:
             until = None
@@ -735,9 +730,9 @@ class Rule(models.Model):
                 parts.append(_('for %(number)s occurrences') % {
                     'number': self.count
                 })
-        elif self.naive_until_date:
+        elif self.until_date:
             parts.append(_('until the %(date)s') % {
-                'date': dateformat.format(self.naive_until_date, 'D d F Y')
+                'date': dateformat.format(self.until_date, 'D d F Y')
             })
         else:
             parts.append(_('forever'))
@@ -747,20 +742,19 @@ class Rule(models.Model):
 class RDate(models.Model):
     recurrence = models.ForeignKey(Recurrence, related_name='r_dates', related_query_name='r_date',
                                    on_delete=models.CASCADE)
-    dt = models.DateTimeField()
-    naive_dt = models.DateField(blank=True)
-    naive_dt_time = models.TimeField(blank=True)
+    naive_dt = models.DateField(verbose_name=_('Date'), blank=True)
+    # naive_dt_time = models.TimeField(blank=True)
+    utc_dt = models.DateTimeField(editable=False)
     exclude = models.BooleanField(default=False)
 
     def __str__(self):
-        dt = datetime.combine(self.naive_dt, self.naive_dt_time)
+        dt = datetime.combine(self.naive_dt, Recurrence.TIME)
         dt_tz = pytz.timezone(self.recurrence.timezone)
         dt = dt_tz.localize(dt)
         return f"date: {dateformat.format(dt, 'D d F Y')} " \
                f"{'excluded from rule' if self.exclude else 'included in rule'}"
 
     def save(self, *args, **kwargs):
-        if self.dt:
-            self.naive_dt = self.dt.date()
-            self.naive_dt_time = self.dt.time()
+        if self.naive_dt:
+            self.utc_dt = datetime.combine(self.naive_dt, Recurrence.TIME)
         super().save(*args, **kwargs)

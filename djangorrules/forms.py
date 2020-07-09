@@ -122,14 +122,14 @@ class RuleForm(forms.ModelForm):
     ]
 
     advance_options = forms.BooleanField(label=_('advance options'), required=False)
-    utc_until = forms.DateTimeField(
-        input_formats=['%Y-%m-%dT%H:%M'],
-        widget=HTML5DateTimeInput(attrs={
-            'class': 'must-hide'
-        },
-            format='%Y-%m-%dT%H:%M'
-        ), required=False
-    )
+    # until_date = forms.DateTimeField(
+    #     input_formats=['%Y-%m-%dT%H:%M'],
+    #     widget=HTML5DateTimeInput(attrs={
+    #         'class': 'must-hide'
+    #     },
+    #         format='%Y-%m-%dT%H:%M'
+    #     ), required=False
+    # )
     interval = forms.TypedChoiceField(
         label=_('interval'), choices=INTERVAL_CHOICES, coerce=int, empty_value=None,
         widget=forms.Select(attrs={
@@ -140,7 +140,7 @@ class RuleForm(forms.ModelForm):
     class Meta:
         model = Rule
         fields = ['recurrence', 'dtstart', 'freq', 'year_month_mode',
-                  'interval', 'wkst', 'bymonth', 'bymonthday', 'byweekday', 'freq_type', 'count', 'utc_until',
+                  'interval', 'wkst', 'bymonth', 'bymonthday', 'byweekday', 'freq_type', 'count', 'until_date',
                   'advance_options', 'bysetpos'
                   ]
 
@@ -150,11 +150,10 @@ class RuleForm(forms.ModelForm):
             'bymonth': Select2MultipleWidget,
             'bymonthday': Select2MultipleWidget(attrs={'class': 'must-hide'}),
             'byweekday': Select2MultipleWidget(attrs={'class': 'must-hide'}),
-            'naive_until_date': forms.HiddenInput,
-            'naive_until_time': forms.HiddenInput,
             'freq_type': forms.RadioSelect,
             'count': forms.NumberInput(attrs={'class': 'must-hide'}),
-            'bysetpos': Select2MultipleWidget(attrs={'class': 'must-hide is_advance-option'})
+            'bysetpos': Select2MultipleWidget(attrs={'class': 'must-hide is_advance-option'}),
+            'until_date': HTML5DateInput
         }
 
     class Media:
@@ -163,7 +162,7 @@ class RuleForm(forms.ModelForm):
                 '/static/djangorrules/css/main.css',
             ),
         }
-        js = ('/static/djangorrules/js/apps.js',)
+        js = ('/static/djangorrules/js/dev.js',)
 
 
 class BaseRuleFormSet(BaseModelFormSet):
