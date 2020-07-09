@@ -13,12 +13,12 @@ def utc_field_default_value(apps, schema):
     rules = Rule.objects.all()
     r_dates = RDate.objects.all()
     for rule in rules:
-        tzname = rule.recurrence.timezone
+        tzname = pytz.timezone(rule.recurrence.timezone)
         rule.utc_dtstart = tzname.localize(datetime.combine(rule.dtstart, TIME))
         rule.save()
 
     for r_date in r_dates:
-        tzname = r_date.recurrence.timezone
+        tzname = pytz.timezone(r_date.recurrence.timezone)
         r_date.utc_dt = tzname.localize(datetime.combine(r_date.naive_dt, TIME))
         r_date.save()
 
