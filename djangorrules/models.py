@@ -65,11 +65,11 @@ class Recurrence(models.Model):
 
     # set a fixed time because all instances must have the same
     # hour time - otherwise the exclude rules not working correctly
-    TIME = time(hour=12, minute=0, second=0)
+    # TIME = time(hour=12, minute=0, second=0)
     TIME_ZONE_LIST = [
         (tz, tz) for tz in pytz.all_timezones
     ]
-
+    start_time = models.TimeField()
     timezone = models.CharField(max_length=30, choices=TIME_ZONE_LIST)
 
     def __str__(self):
@@ -100,7 +100,7 @@ class Recurrence(models.Model):
                     rule_set.rrule(dateutil_object)
         if r_dates.exists():
             for day in r_dates:
-                dt = datetime.combine(day.naive_dt, self.TIME)
+                dt = datetime.combine(day.naive_dt, self.start_time)
                 dt = recurrence_tz.localize(dt)
                 if day.exclude:
                     rule_set.exdate(dt)
@@ -489,9 +489,9 @@ class Rule(models.Model):
 
     def save(self, *args, **kwargs):
         tzname = pytz.timezone(self.recurrence.timezone)
-        self.utc_dtstart = tzname.localize(datetime.combine(self.dtstart, Recurrence.TIME))
+        self.utc_dtstart = tzname.localize(datetime.combine(self.dtstart, self.recurrence.start_time))
         if self.until_date:
-            dt = datetime.combine(self.until_date, Recurrence.TIME)
+            dt = datetime.combine(self.until_date, self.recurrence.start_time)
             dt = tzname.localize(dt)
             self.utc_until = dt
         else:
@@ -543,12 +543,12 @@ class Rule(models.Model):
     def to_dateutil_rule(self):
         freq = self.freq
         dt_tz = pytz.timezone(self.recurrence.timezone)
-        dtstart = datetime.combine(self.dtstart, Recurrence.TIME)
+        dtstart = datetime.combine(self.dtstart, self.recurrence.start_time)
         dtstart = dt_tz.localize(dtstart)
         count = self.count or None
 
         if self.freq_type == self.UNTIL:
-            until = datetime.combine(self.until_date, Recurrence.TIME)
+            until = datetime.combine(self.until_date, self.recurrence.start_time)
             until = dt_tz.localize(until)
         else:
             until = None
@@ -748,7 +748,7 @@ class RDate(models.Model):
     exclude = models.BooleanField(default=False)
 
     def __str__(self):
-        dt = datetime.combine(self.naive_dt, Recurrence.TIME)
+        dt = datetime.combine(self.naive_dt, self.recurrence.start_time)
         dt_tz = pytz.timezone(self.recurrence.timezone)
         dt = dt_tz.localize(dt)
         return f"date: {dateformat.format(dt, 'D d F Y')} " \
@@ -756,5 +756,5 @@ class RDate(models.Model):
 
     def save(self, *args, **kwargs):
         if self.naive_dt:
-            self.utc_dt = datetime.combine(self.naive_dt, Recurrence.TIME)
+            self.utc_dt = datetime.combine(self.naive_dt, self.recurrence.start_time)
         super().save(*args, **kwargs)

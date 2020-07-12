@@ -4,3 +4,6 @@
 /db.sqlite3
 /manage.py
 /dist/
+/djangorrules/migrations/__pycache__/0020_auto_20200712_0103.cpython-36.pyc
+/djangorrules/migrations/__pycache__/0018_auto_20200709_1850.cpython-36.pyc
+/djangorrules/__pycache__/models.cpython-36.pyc
